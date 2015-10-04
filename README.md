@@ -1,6 +1,7 @@
 # The Hand of the King
 
 The Hand of the King, or hand for short, is a tool for organizing and executing shell(ish) scripts written in Go.
+As the name suggests, hand gets common tasks done for you w/out fuss and rarely with errors.
 
 ## Rationale
 
