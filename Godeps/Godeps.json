@@ -1,0 +1,5 @@
+{
+	"ImportPath": "github.com/bryanwb/hand",
+	"GoVersion": "go1.5.1",
+	"Deps": []
+}
