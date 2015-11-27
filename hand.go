@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 )
 
@@ -59,6 +60,7 @@ func (h *Hand) Update(fingers []string) error {
 		updateList = fingers
 	}
 	for i := range updateList {
+		Logger.Debugf("Updating finger %s", updateList[i])
 		if err := h.UpdateFinger(updateList[i]); err != nil {
 			result = multierror.Append(result, err)
 		}
@@ -66,9 +68,37 @@ func (h *Hand) Update(fingers []string) error {
 	return nil
 }
 
+func (h *Hand) buildFinger(p string) error {
+	action := "go build"
+	shell := os.Getenv("SHELL")
+	goPath := os.Getenv("GOPATH")
+	goRoot := os.Getenv("GOROOT")
+	Logger.Debugf("Executing command %v in path %s", action, p)
+	cmd := exec.Command(shell, "-c", action)
+	extendedGoPath := fmt.Sprintf("GOPATH=%s:%s", p, goPath)
+	cmd.Env = append(os.Environ(), extendedGoPath, goRoot)
+	cmd.Dir = path.Dir(p)
+	err := cmd.Run()
+	if err != nil {
+		Logger.Errorf("Building %s failed with error %s", p, err.Error())
+		output, _ := cmd.CombinedOutput()
+		Logger.Errorf(string(output))
+	} else {
+		Logger.Debugf("Building %s completed successfully", p)
+	}
+	return err
+}
+
 func (h *Hand) UpdateFinger(finger string) error {
-	//	p := h.Fingers[finger]
-	return nil
+	p := h.Fingers[finger]
+	Logger.Debugf("finger p is %v", p)
+	srcP, err := resolvePath(p)
+	Logger.Debugf("resolved finger p is %v", p)
+
+	if err != nil {
+		return err
+	}
+	return h.buildFinger(srcP)
 }
 
 func (h *Hand) MakeFinger(name string, flags map[string]bool, args []string) (*Finger, error) {

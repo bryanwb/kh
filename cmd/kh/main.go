@@ -139,13 +139,14 @@ func main() {
 		os.Exit(0)
 	}
 	cmd := kh.SubcommandInvoked(os.Args)
+	log.Debug(cmd)
 	switch cmd {
 	case "version":
 		showVersion()
 	case "help":
 		showHelp(h)
 	case "update":
-		executeUpdate(h, os.Args[3:])
+		executeUpdate(h, kh.StripFlags(os.Args[2:]))
 	case "":
 		showHelp(h)
 	}

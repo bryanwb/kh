@@ -68,7 +68,7 @@ func stripCommonFlags(args []string) []string {
 	return strippedArgs
 }
 
-func stripFlags(args []string) []string {
+func StripFlags(args []string) []string {
 	newArgs := make([]string, 0)
 	for i := range args {
 		if !strings.HasPrefix(args[i], "-") {
@@ -79,7 +79,7 @@ func stripFlags(args []string) []string {
 }
 
 func SubcommandInvoked(args []string) string {
-	args = stripFlags(args)
+	args = StripFlags(args)
 	if len(args) < 2 {
 		return ""
 	}
@@ -95,4 +95,19 @@ func pathHasFinger(fingerPath string) bool {
 		return true
 	}
 	return false
+}
+
+func resolvePath(p string) (string, error) {
+	fi, err := os.Lstat(p)
+	if err != nil {
+		Logger.Debugf("Path %s does not exist\n", p)
+		return "", err
+	}
+	if fi.Mode()&os.ModeSymlink == os.ModeSymlink {
+		if realPath, err := os.Readlink(p); err == nil {
+			return realPath, nil
+		}
+		return "", err
+	}
+	return p, nil
 }
