@@ -1,6 +1,6 @@
-# The Hand of the King
+# The King's Hand
 
-The Hand of the King, or hand for short, is a tool for organizing and executing
+The King's Hand, or kh for short, is a tool for organizing and executing
 shellish scripts written in Go.  As the name suggests, hand gets common tasks
 done for you w/out fuss and rarely with errors.
 
@@ -19,20 +19,20 @@ Just as important, I want to organize my scripts logically as subcommands. Once
 I have written scripts, it can be very hard for me to find them again later and
 even recall how they work. I need an organizing structure for these tasks.
 For our first example, let's write a bunch of scripts for git. Our top-level
-program, let's call it `h` has a subcommand `git` off of which all git-related
+program, let's call it `kh` has a subcommand `git` off of which all git-related
 scripts hang.
 
 ```
-h git gerrit-hook  # download the gerrit pre-commit hook into the current project
-h git add-ignores  # add commonly ignored file globs to .gitignore
+kh git gerrit-hook  # download the gerrit pre-commit hook into the current project
+kh git add-ignores  # add commonly ignored file globs to .gitignore
 ```
 
 GPG is another program that I cannot use w/out looking up a cheatsheet despite using for several years. Here are 
 a few examples of how I might script GPG with `h`.
 
 ```
-h gpg decrypt foo.asc  # decrypted contents of foo.asc are output to foo.asc.plain
-h gpg encrypt foo.plain # encrypt contents writtent to foo.plain.gpg w/out overwriting original!
+kh gpg decrypt foo.asc  # decrypted contents of foo.asc are output to foo.asc.plain
+kh gpg encrypt foo.plain # encrypt contents writtent to foo.plain.gpg w/out overwriting original!
 ```
 
 Note that the above scripts might be better accomplished through scripting vim,
@@ -55,10 +55,10 @@ the fly.
 This tool requires that you have a code organization for Go present on your
 machine.
 
-User-defined fingers live in ~/.hand/
+User-defined fingers live in ~/.kh/
 
 ```                          
-~/.hand/
+~/.kh/
           git/
               main.go
           gpg/

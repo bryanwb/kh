@@ -1,15 +1,16 @@
 build:
-	godep go build github.com/bryanwb/hand/cmd/hand
+	godep go build github.com/bryanwb/kh/cmd/kh
+	cd fingers/hello-world && go build
 
 clean:
-	rm -f hand
+	rm -f kh
 
 test:
 	godep go test
 
 install: build
-	cp -f hand /usr/local/bin/
-	chmod +x /usr/local/bin/hand
+	cp -f kh /usr/local/bin/
+	chmod +x /usr/local/bin/kh
 
 all:	clean build
 

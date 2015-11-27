@@ -1,4 +1,4 @@
-package hand
+package kh
 
 import (
 	"os"

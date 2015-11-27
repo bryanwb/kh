@@ -23,7 +23,8 @@ package main
 import (
 	"fmt"
 	"github.com/Sirupsen/logrus"
-	"github.com/bryanwb/hand"
+	"github.com/bryanwb/kh"
+	flag "github.com/spf13/pflag"
 	"os"
 	"os/user"
 	"path"
@@ -31,29 +32,21 @@ import (
 )
 
 var log = logrus.New()
+var verboseFlag bool
+var helpFlag bool
 
-func fingerInvoked(h *hand.Hand, args []string) bool {
+func fingerInvoked(h *kh.Hand, args []string) bool {
 	if len(args) < 2 {
 		return false
 	}
-	return hand.Contains(h.FingerNames(), args[1])
+	return kh.Contains(h.FingerNames(), args[1])
 }
 
-func verboseSet() bool {
-	if hand.ContainsAny(os.Args, []string{"-v", "--verbose"}) {
-		return true
-	}
-	return false
-}
-
-func makeHand() *hand.Hand {
+func makeHand() *kh.Hand {
 	currentUser, _ := user.Current()
-	hand.HandHome = path.Join(currentUser.HomeDir, "/.hand")
-	hand.Logger = log
-	if verboseSet() {
-		log.Level = logrus.DebugLevel
-	}
-	h, err := hand.MakeHand(hand.HandHome)
+	kh.HandHome = path.Join(currentUser.HomeDir, "/.kh")
+	kh.Logger = log
+	h, err := kh.MakeHand(kh.HandHome)
 	if err != nil {
 		fmt.Println("Encountered error finding fingers")
 		fmt.Printf("Error was %s", err.Error())
@@ -70,27 +63,27 @@ func versionCmdInvoked() bool {
 }
 
 func showVersion() {
-	fmt.Printf("Version %s of The Hand of the King(hand)\n", hand.Version)
+	fmt.Printf("Version %s of The King's Hand\n", kh.Version)
 }
 
-func showHelp(h *hand.Hand) {
-	helpText := `The Hand of the King (hand) is a tool for organizing and executing shellish scripts.
+func showHelp(h *kh.Hand) {
+	helpText := `The King's Hand (kh) is a tool for organizing and executing shellish scripts.
 It does your dirty work, so keep it clean.
-Hand exposes plugins, known as fingers, as subcommands.
+kh exposes plugins, known as fingers, as subcommands.
 
 Usage:
-hand [flags]
-hand [finger] [arguments to a finger]
+kh [flags]
+kh [finger] [arguments to a finger]
 
 Available Commands:
-version     Print the version number of Hand
+version     Print the version number of King's Hand
 help
 
 Flags:
-  -H, --hand-home="/Users/hitman/.hand": Home directory for hand
+  -H, --hand-home="/Users/hitman/.kh": Home directory for kh
   -v, --verbose[=false]: verbose output
 
-Use "hand [finger] --help" for more information about a finger.
+Use "kh [finger] --help" for more information about a finger.
 `
 	fmt.Printf(helpText)
 	if len(h.Fingers) > 0 {
@@ -108,16 +101,29 @@ func findFingerArgs(args []string) []string {
 	return args[2:]
 }
 
+func parseFlags() {
+	flag.BoolVarP(&verboseFlag, "verbose", "v", false, "Verbose mode")
+	flag.BoolVarP(&helpFlag, "help", "h", false, "help")
+	flag.Parse()
+	if verboseFlag {
+		log.Level = logrus.DebugLevel
+	}
+}
+
 // This doesn't use a cli argument parser because such libraries typically cannot
 // handle subcommands that are dynamically loaded
 // For this reason cli parsing is done manually
 func main() {
+	parseFlags()
 	h := makeHand()
 	if fingerInvoked(h, os.Args) {
 		fingerName := os.Args[1]
 		remainingArgs := findFingerArgs(os.Args)
-		if err := h.ExecuteFinger(fingerName, remainingArgs); err != nil {
-			fmt.Errorf(err.Error())
+		flags := map[string]bool{"help": helpFlag, "verbose": verboseFlag}
+		if err := h.ExecuteFinger(fingerName, flags, remainingArgs); err != nil {
+			log.Errorf("Encountered error executing finger %s", fingerName)
+			log.Errorf("Error message: %v", err)
+			os.Exit(1)
 		}
 		os.Exit(0)
 	}
@@ -125,9 +131,9 @@ func main() {
 		showVersion()
 		os.Exit(0)
 	}
-	if hand.HelpCmdInvoked() {
+	if kh.HelpCmdInvoked() {
 		showHelp(h)
 		os.Exit(0)
 	}
-
+	showHelp(h)
 }

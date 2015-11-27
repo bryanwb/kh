@@ -1,4 +1,4 @@
-package hand
+package kh
 
 import (
 	"fmt"
@@ -14,11 +14,6 @@ var Version = "0.0.1"
 var Verbose bool
 var HandHome string
 
-type Response struct {
-	Stdout string
-	Stderr string
-}
-
 type Hand struct {
 	Home    string
 	Fingers map[string]string
@@ -27,6 +22,7 @@ type Hand struct {
 func MakeHand(home string) (*Hand, error) {
 	h := new(Hand)
 	h.Home = home
+	Logger.Debugf("Using %s for home", home)
 	h.Fingers = make(map[string]string)
 	err := h.FindFingers()
 	return h, err
@@ -44,51 +40,78 @@ func (h *Hand) FindFingers() error {
 		name := path.Base(fingerPath)
 		fullFingerPath := path.Join(h.Home, fingerPath, name)
 		if pathHasFinger(fullFingerPath) {
+			Logger.Debugf("Found finger at %s", fullFingerPath)
 			h.Fingers[name] = fullFingerPath
+		} else {
+			Logger.Debugf("No finger found at %s", fullFingerPath)
 		}
 	}
 	return err
 }
 
-func (h *Hand) MakeFinger(name string, args []string) (*Finger, error) {
+func (h *Hand) MakeFinger(name string, flags map[string]bool, args []string) (*Finger, error) {
 	f := new(Finger)
 	f.Path = path.Join(h.Home, name, name)
 	f.plugin = pingo.NewPlugin("tcp", f.Path)
-	f.args = args
+	f.args = makeArgs(flags, args)
 	return f, nil
 }
 
-func (h *Hand) ExecuteFinger(name string, args []string) error {
-	f, err := h.MakeFinger(name, args)
+func (h *Hand) ExecuteFinger(name string, flags map[string]bool, args []string) error {
+	f, err := h.MakeFinger(name, flags, args)
 	if err != nil {
-		fmt.Errorf(err.Error())
+		return err
 	}
-	if err = f.Execute(); err != nil {
-		fmt.Errorf(err.Error())
-	}
-	return nil
+	return f.Execute()
+}
+
+func makeArgs(flags map[string]bool, args []string) *FingerArgs {
+	newArgs := new(FingerArgs)
+	fs := new(flagSet)
+	fs.Help = flags["help"]
+	fs.Verbose = flags["verbose"]
+	newArgs.Flags = fs
+	newArgs.Args = args
+	return newArgs
+}
+
+type flagSet struct {
+	Help    bool
+	Verbose bool
+}
+
+// A finger takes a set of flags plus an arbitrary list of arguments
+type FingerArgs struct {
+	Flags *flagSet
+	Args  []string
 }
 
 type Finger struct {
 	Path   string
 	plugin *pingo.Plugin
-	args   []string
+	args   *FingerArgs
 }
 
 func (f *Finger) Execute() error {
 	f.plugin.Start()
 	defer f.plugin.Stop()
-	helpFlags := []string{"-h", "--help", "help"}
-	if ContainsAny(helpFlags, f.args) {
-
-	} else {
-		resp := new(Response)
-		if err := f.plugin.Call("Finger.Execute", f.args, &resp); err != nil {
-			log.Print(err)
-			return err
-		} else {
-			fmt.Println(resp.Stdout)
-		}
+	resp := new(Response)
+	Logger.Debugf("Executing finger %s", f.Path)
+	if err := f.plugin.Call("FingerServer.Execute", f.args, &resp); err != nil {
+		Logger.Debugf(resp.SprintLog())
+		return err
+	}
+	stdout := resp.SprintStdout()
+	stderr := resp.SprintStderr()
+	fingerLog := resp.SprintLog()
+	if stdout != "" {
+		fmt.Println(stdout)
+	}
+	if stderr != "" {
+		fmt.Fprintf(os.Stderr, stderr+"\n")
+	}
+	if fingerLog != "" {
+		fmt.Fprintf(os.Stderr, fingerLog+"\n")
 	}
 	return nil
 }
@@ -108,72 +131,3 @@ func pathHasFinger(fingerPath string) bool {
 	}
 	return false
 }
-
-// func main() {
-// 	// p := pingo.NewPlugin("tcp", "/Users/hitman/.hand/hello-world/hello-world")
-// 	// p.Start()
-// 	// defer p.Stop()
-
-// 	// var resp string = ""
-
-// 	// if err := p.Call("MyPlugin.SayHello", "Go Developer", &resp); err != nil {
-// 	// 	log.Print(err)
-// 	// } else {
-// 	// 	log.Print(resp)
-// 	// }
-// 	log.Out = os.Stderr
-// 	formatter := &logrus.TextFormatter{}
-// 	formatter.ForceColors = true
-// 	log.Formatter = formatter
-// 	log.Level = logrus.InfoLevel
-
-// 	var Verbose bool
-// 	usr, _ := user.Current()
-// 	HandHome = path.Join(usr.HomeDir, "/.hand")
-
-// 	fingerMsg := "No available fingers"
-// 	if fingers, err := FindFingers(); err == nil {
-// 		fingerMsg = fmt.Sprintf("Available fingers are:\n %s\n",
-// 			strings.Join(fingers.Names(), "\n"))
-// 	}
-// 	var handCmd = &cobra.Command{
-// 		Use:   "hand",
-// 		Short: "hand is the home your shell scripts always wanted",
-// 		Long:  `The Hand of the King (hand) is a tool for organizing and executing "shell" scripts`,
-// 		Run: func(cmd *cobra.Command, args []string) {
-// 			fmt.Println(`Please pull one of hand's fingers to get started. Type
-// "hand help" for more information`)
-// 		},
-// 	}
-// 	handCmd.PersistentFlags().StringVarP(&HandHome, "hand-home", "H", HandHome,
-// 		"Home directory for hand")
-// 	handCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false,
-// 		"verbose output")
-// 	handCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
-// 		if Verbose == true {
-// 			log.Level = logrus.DebugLevel
-// 		}
-// 	}
-
-// 	var versionCmd = &cobra.Command{
-// 		Use:   "version",
-// 		Short: "Print the version number of sellsword",
-// 		Long:  `All software has versions. This is Sellsword's`,
-// 		Run: func(cmd *cobra.Command, args []string) {
-// 			fmt.Printf("hand version %s\n", Version)
-// 		},
-// 	}
-// 	handCmd.AddCommand(versionCmd)
-
-// 	var listCmd = &cobra.Command{
-// 		Use:   "list",
-// 		Short: "Lists available fingers (plugins)",
-// 		Long:  `Lists available fingers`,
-// 		Run: func(cmd *cobra.Command, args []string) {
-// 			fmt.Printf("hand version %s\n", Version)
-// 		},
-// 	}
-// 	handCmd.AddCommand(listCmd)
-
-// 	handCmd.Execute()
-// }

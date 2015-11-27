@@ -1,29 +1,37 @@
 package main
 
 import (
-	"github.com/bryanwb/hand"
+	"errors"
+	"github.com/bryanwb/kh"
 	"github.com/dullgiulio/pingo"
 )
 
-type Finger struct{}
+type FingerServer struct{}
 
-// sadly the name parameter is necessary, not sure why
 func help() string {
 	return "hi, I am easy to use"
 }
 
-func (p *Finger) Execute(args []string, resp *hand.Response) error {
-	if hand.IsHelpCommand(args) {
-		resp.Stdout = help()
+func (p *FingerServer) Execute(fa *kh.FingerArgs, resp *kh.Response) error {
+	resp.Debug("Inside execute")
+	// wish there was a more elegant way to set the logging level
+	resp.SetVerbose(fa.Flags.Verbose)
+	if fa.Flags.Help {
+		resp.Debugf("About to execute %s", "help")
+		resp.WriteStdout(help())
 		return nil
 	}
-	resp.Stdout = "Hello, " + args[0]
-	resp.Stderr = ""
+	args := fa.Args
+	if len(args) < 1 {
+		return errors.New("Hey buddy, I need a name")
+	} else {
+		resp.WriteStdout("Hello, " + args[0])
+	}
 	return nil
 }
 
 func main() {
-	plugin := &Finger{}
+	plugin := &FingerServer{}
 	pingo.Register(plugin)
 	pingo.Run()
 }
