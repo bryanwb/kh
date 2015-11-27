@@ -7,6 +7,12 @@ done for you w/out fuss and rarely with errors.
 King's Hand is partially inspired by [sub](https://signalvnoise.com/posts/3264-automating-with-convention-introducing-sub)
 from the great folks at Basecamp.
 
+In essence, King's Hand make is easy to write small scripts in Go rather
+than x scripting language. Note that King's Hand does not dynamically
+execute go code like [gorun](https://wiki.ubuntu.com/gorun). All scripts
+must be compiled to go binaries using the `kh update` command. More on this
+later.
+
 ## Rationale
 
 If you're like me, you have to write a fair number of shell scripts as part of
