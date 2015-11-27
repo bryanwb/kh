@@ -4,6 +4,9 @@ The King's Hand, or kh for short, is a tool for organizing and executing
 shellish scripts written in Go.  As the name suggests, hand gets common tasks
 done for you w/out fuss and rarely with errors.
 
+King's Hand is partially inspired by [sub](https://signalvnoise.com/posts/3264-automating-with-convention-introducing-sub)
+from the great folks at Basecamp.
+
 ## Rationale
 
 If you're like me, you have to write a fair number of shell scripts as part of
@@ -70,7 +73,15 @@ User-defined fingers live in ~/.kh/
 ```
 
 These plugins are not dynamically loaded! In fact, to use them you must first
-update the hand binary. To do this just execute `h update`. After updating, the
+update the hand binary. To do this just execute `kh update`. After updating, the
 new fingers (plugins) will be avaiable for use.
+
+
+## What's Missing
+
+It would be great if King's Hand could fetch and install additional fingers. Haven't figured out how
+to do that yet. Perhaps using `go get`?
+
+How to manage shell completions?
 
 I would love some feedback on these ideas! Please let me know of any gotchas i have not considered

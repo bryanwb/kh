@@ -75,9 +75,12 @@ Usage:
 kh [flags]
 kh [finger] [arguments to a finger]
 
-Available Commands:
-version     Print the version number of King's Hand
-help
+Available Meta-Commands:
+version            Print the version number of King's Hand
+help               C'mon, do I have to explain this one?
+update [finger]    Builds one or more fingers
+                   By default, updates all   
+
 
 Flags:
   -H, --hand-home="/Users/hitman/.kh": Home directory for kh
@@ -127,13 +130,15 @@ func main() {
 		}
 		os.Exit(0)
 	}
-	if versionCmdInvoked() {
+	cmd := kh.SubcommandInvoked(os.Args)
+	switch cmd {
+	case "version":
 		showVersion()
-		os.Exit(0)
-	}
-	if kh.HelpCmdInvoked() {
+	case "help":
 		showHelp(h)
-		os.Exit(0)
+	case "update":
+		showHelp(h)
+	case "":
+		showHelp(h)
 	}
-	showHelp(h)
 }

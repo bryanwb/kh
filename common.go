@@ -2,7 +2,11 @@ package kh
 
 import (
 	"os"
+	"strings"
 )
+
+var commonFlags []string = []string{"-v", "--verbose", "-h", "--help"}
+var subcommands []string = []string{"version", "help", "update"}
 
 func Map_has_key(m map[string]string, s string) bool {
 	for str, _ := range m {
@@ -52,4 +56,35 @@ func IsHelpCommand(args []string) bool {
 		return true
 	}
 	return false
+}
+
+func stripCommonFlags(args []string) []string {
+	strippedArgs := make([]string, 0)
+	for i := range args {
+		if !Contains(commonFlags, args[i]) {
+			strippedArgs = append(strippedArgs, args[i])
+		}
+	}
+	return strippedArgs
+}
+
+func stripFlags(args []string) []string {
+	newArgs := make([]string, 0)
+	for i := range args {
+		if !strings.HasPrefix(args[i], "-") {
+			newArgs = append(newArgs, args[i])
+		}
+	}
+	return newArgs
+}
+
+func SubcommandInvoked(args []string) string {
+	args = stripFlags(args)
+	if len(args) < 2 {
+		return ""
+	}
+	if Contains(subcommands, args[1]) {
+		return args[1]
+	}
+	return ""
 }

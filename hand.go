@@ -71,7 +71,7 @@ func makeArgs(flags map[string]bool, args []string) *FingerArgs {
 	fs.Help = flags["help"]
 	fs.Verbose = flags["verbose"]
 	newArgs.Flags = fs
-	newArgs.Args = args
+	newArgs.Args = stripCommonFlags(args)
 	return newArgs
 }
 
