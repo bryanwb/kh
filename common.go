@@ -88,3 +88,11 @@ func SubcommandInvoked(args []string) string {
 	}
 	return ""
 }
+
+func pathHasFinger(fingerPath string) bool {
+	if fi, err := os.Stat(fingerPath); err == nil && fi.Mode()&0111 != 0 {
+		Logger.Debugf("Found finger at %s", fingerPath)
+		return true
+	}
+	return false
+}

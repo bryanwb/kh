@@ -113,6 +113,14 @@ func parseFlags() {
 	}
 }
 
+func executeUpdate(h *kh.Hand, args []string) {
+	if err := h.Update(args); err != nil {
+		log.Errorf("Encountered error updating fingers")
+		log.Errorf("Error message: %v", err)
+		os.Exit(1)
+	}
+}
+
 // This doesn't use a cli argument parser because such libraries typically cannot
 // handle subcommands that are dynamically loaded
 // For this reason cli parsing is done manually
@@ -137,7 +145,7 @@ func main() {
 	case "help":
 		showHelp(h)
 	case "update":
-		showHelp(h)
+		executeUpdate(h, os.Args[3:])
 	case "":
 		showHelp(h)
 	}

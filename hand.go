@@ -4,6 +4,7 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/dullgiulio/pingo"
+	"github.com/hashicorp/go-multierror"
 	"io/ioutil"
 	"os"
 	"path"
@@ -47,6 +48,27 @@ func (h *Hand) FindFingers() error {
 		}
 	}
 	return err
+}
+
+func (h *Hand) Update(fingers []string) error {
+	var result error
+	updateList := make([]string, 0)
+	if len(fingers) < 1 {
+		updateList = h.FingerNames()
+	} else {
+		updateList = fingers
+	}
+	for i := range updateList {
+		if err := h.UpdateFinger(updateList[i]); err != nil {
+			result = multierror.Append(result, err)
+		}
+	}
+	return nil
+}
+
+func (h *Hand) UpdateFinger(finger string) error {
+	//	p := h.Fingers[finger]
+	return nil
 }
 
 func (h *Hand) MakeFinger(name string, flags map[string]bool, args []string) (*Finger, error) {
@@ -122,12 +144,4 @@ func (h *Hand) FingerNames() []string {
 		names = append(names, k)
 	}
 	return names
-}
-
-func pathHasFinger(fingerPath string) bool {
-	if fi, err := os.Stat(fingerPath); err == nil && fi.Mode()&0111 != 0 {
-		Logger.Debugf("Found finger at %s", fingerPath)
-		return true
-	}
-	return false
 }
