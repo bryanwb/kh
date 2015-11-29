@@ -101,10 +101,10 @@ func (h *Hand) UpdateFinger(finger string) error {
 	return h.buildFinger(srcP)
 }
 
-func (h *Hand) MakeFinger(name string, flags map[string]bool, args []string) (*Finger, error) {
-	f := new(Finger)
+func (h *Hand) MakeFinger(name string, flags map[string]bool, args []string) (*FingerClient, error) {
+	f := new(FingerClient)
 	f.Path = path.Join(h.Home, name, name)
-	f.plugin = pingo.NewPlugin("tcp", f.Path)
+	f.finger = pingo.NewPlugin("tcp", f.Path)
 	f.args = makeArgs(flags, args)
 	return f, nil
 }
@@ -136,20 +136,21 @@ type flagSet struct {
 type FingerArgs struct {
 	Flags *flagSet
 	Args  []string
+	Stdin []byte
 }
 
-type Finger struct {
+type FingerClient struct {
 	Path   string
-	plugin *pingo.Plugin
+	finger *pingo.Plugin
 	args   *FingerArgs
 }
 
-func (f *Finger) Execute() error {
-	f.plugin.Start()
-	defer f.plugin.Stop()
+func (f *FingerClient) Execute() error {
+	f.finger.Start()
+	defer f.finger.Stop()
 	resp := new(Response)
 	Logger.Debugf("Executing finger %s", f.Path)
-	if err := f.plugin.Call("FingerServer.Execute", f.args, &resp); err != nil {
+	if err := f.finger.Call("Finger.Execute", f.args, &resp); err != nil {
 		Logger.Debugf(resp.SprintLog())
 		return err
 	}

@@ -4,14 +4,17 @@ The King's Hand, or kh for short, is a tool for organizing and executing
 shellish scripts written in Go.  As the name suggests, hand gets common tasks
 done for you w/out fuss and rarely with errors.
 
-King's Hand is partially inspired by [sub](https://signalvnoise.com/posts/3264-automating-with-convention-introducing-sub)
-from the great folks at Basecamp.
-
 In essence, King's Hand make is easy to write small scripts in Go rather
 than x scripting language. Note that King's Hand does not dynamically
 execute go code like [gorun](https://wiki.ubuntu.com/gorun). All scripts
 must be compiled to go binaries using the `kh update` command. More on this
 later.
+
+King's Hand is partially inspired by [sub](https://signalvnoise.com/posts/3264-automating-with-convention-introducing-sub)
+from the great folks at Basecamp. The abbreviated name of King's Hand, kh,
+is also an oblique reference to the great computer scientist and author
+[Brian KernigHan](https://en.wikipedia.org/wiki/Brian_Kernighan).
+
 
 ## Rationale
 

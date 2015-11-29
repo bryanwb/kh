@@ -3,22 +3,23 @@ package main
 import (
 	"errors"
 	"github.com/bryanwb/kh"
-	"github.com/dullgiulio/pingo"
 )
 
-type FingerServer struct{}
+// This object has to be named "Finger" due to a quirk
+// in the plugin system that kh uses
+type Finger struct{}
 
-func help() string {
+func (p *Finger) Help() string {
 	return "hi, I am easy to use"
 }
 
-func (p *FingerServer) Execute(fa *kh.FingerArgs, resp *kh.Response) error {
+func (p *Finger) Execute(fa *kh.FingerArgs, resp *kh.Response) error {
 	resp.Debug("Inside execute")
 	// wish there was a more elegant way to set the logging level
 	resp.SetVerbose(fa.Flags.Verbose)
 	if fa.Flags.Help {
 		resp.Debugf("About to execute %s", "help")
-		resp.WriteStdout(help())
+		resp.WriteStdout(p.Help())
 		return nil
 	}
 	args := fa.Args
@@ -31,7 +32,7 @@ func (p *FingerServer) Execute(fa *kh.FingerArgs, resp *kh.Response) error {
 }
 
 func main() {
-	plugin := &FingerServer{}
-	pingo.Register(plugin)
-	pingo.Run()
+	finger := &Finger{}
+	kh.Register(finger)
+	kh.Run()
 }

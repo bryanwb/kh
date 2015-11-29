@@ -104,13 +104,22 @@ func findFingerArgs(args []string) []string {
 	return args[2:]
 }
 
-func parseFlags() {
+func parseFlagsAndArgs() []string {
 	flag.BoolVarP(&verboseFlag, "verbose", "v", false, "Verbose mode")
 	flag.BoolVarP(&helpFlag, "help", "h", false, "help")
 	flag.Parse()
 	if verboseFlag {
 		log.Level = logrus.DebugLevel
 	}
+	if err := flag.CommandLine.Parse(os.Args[1:]); err != nil {
+		flag.Usage()
+		os.Exit(1)
+	}
+	args := flag.Args()
+	if len(args) < 2 {
+		return []string{args[0], ""}
+	}
+	return args
 }
 
 func executeUpdate(h *kh.Hand, args []string) {
@@ -125,7 +134,7 @@ func executeUpdate(h *kh.Hand, args []string) {
 // handle subcommands that are dynamically loaded
 // For this reason cli parsing is done manually
 func main() {
-	parseFlags()
+	args := parseFlagsAndArgs()
 	h := makeHand()
 	if fingerInvoked(h, os.Args) {
 		fingerName := os.Args[1]
@@ -138,7 +147,7 @@ func main() {
 		}
 		os.Exit(0)
 	}
-	cmd := kh.SubcommandInvoked(os.Args)
+	cmd := args[1]
 	log.Debug(cmd)
 	switch cmd {
 	case "version":
