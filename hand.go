@@ -150,7 +150,11 @@ func (f *FingerClient) Execute() error {
 	defer f.finger.Stop()
 	resp := new(Response)
 	Logger.Debugf("Executing finger %s", f.Path)
-	if err := f.finger.Call("Finger.Execute", f.args, &resp); err != nil {
+	methodName := "Finger.Execute"
+	if f.args.Flags.Help {
+		methodName = "Finger.Help"
+	}
+	if err := f.finger.Call(methodName, f.args, &resp); err != nil {
 		Logger.Debugf(resp.SprintLog())
 		return err
 	}

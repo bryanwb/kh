@@ -15,6 +15,21 @@ from the great folks at Basecamp. The abbreviated name of King's Hand, kh,
 is also an oblique reference to the great computer scientist and author
 [Brian KernigHan](https://en.wikipedia.org/wiki/Brian_Kernighan).
 
+## Installation
+
+King's Hand assumes that you have a working Go development environment. First
+execute,
+
+```
+go get -u github.com/bryanwb/kh
+```
+
+To install the default fingers and initialize your ~/.kh directory
+
+```
+kh init
+```
+
 
 ## Rationale
 
@@ -39,8 +54,7 @@ kh git gerrit-hook  # download the gerrit pre-commit hook into the current proje
 kh git add-ignores  # add commonly ignored file globs to .gitignore
 ```
 
-GPG is another program that I cannot use w/out looking up a cheatsheet despite using for several years. Here are 
-a few examples of how I might script GPG with `h`.
+GPG is another program that I cannot use w/out looking up a cheatsheet despite using for several years.
 
 ```
 kh gpg decrypt foo.asc  # decrypted contents of foo.asc are output to foo.asc.plain
@@ -51,7 +65,8 @@ Note that the above scripts might be better accomplished through scripting vim,
 emacs, or sublimeText. However, in my experience there is zero consistency in
 editor usage across a development team.
 
-Let's call these subcommands **fingers** rather than scripts so we don't confuse them with Bash.
+Let's call these subcommands **fingers** rather than scripts so we don't
+confuse them with Bash.
 
 I have been interested in writing shell(ish) scripts and further writing tools
 that are easy to up-to-date in Google's Go programming language. The primary
@@ -91,6 +106,6 @@ new fingers (plugins) will be avaiable for use.
 It would be great if King's Hand could fetch and install additional fingers. Haven't figured out how
 to do that yet. Perhaps using `go get`?
 
-How to manage shell completions?
+How to support shell completions?
 
 I would love some feedback on these ideas! Please let me know of any gotchas i have not considered

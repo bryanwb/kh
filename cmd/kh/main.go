@@ -35,24 +35,20 @@ var log = logrus.New()
 var verboseFlag bool
 var helpFlag bool
 
-func fingerInvoked(h *kh.Hand, args []string) bool {
-	if len(args) < 2 {
-		return false
-	}
-	return kh.Contains(h.FingerNames(), args[1])
+func fingerInvoked(h *kh.Hand, arg string) bool {
+	return kh.Contains(h.FingerNames(), arg)
 }
 
-func makeHand() *kh.Hand {
+func makeHand() (*kh.Hand, error) {
 	currentUser, _ := user.Current()
 	kh.HandHome = path.Join(currentUser.HomeDir, "/.kh")
 	kh.Logger = log
 	h, err := kh.MakeHand(kh.HandHome)
 	if err != nil {
-		fmt.Println("Encountered error finding fingers")
-		fmt.Printf("Error was %s", err.Error())
-		os.Exit(1)
+		log.Debug("Encountered error finding fingers")
+		log.Debug("Error was %s", err.Error())
 	}
-	return h
+	return h, err
 }
 
 func versionCmdInvoked() bool {
@@ -116,9 +112,14 @@ func parseFlagsAndArgs() []string {
 		os.Exit(1)
 	}
 	args := flag.Args()
+	log.Debugf("args are %v", args)
+	if len(args) < 1 {
+		return []string{"", ""}
+	}
 	if len(args) < 2 {
 		return []string{args[0], ""}
 	}
+
 	return args
 }
 
@@ -130,24 +131,37 @@ func executeUpdate(h *kh.Hand, args []string) {
 	}
 }
 
+func executeFinger(h *kh.Hand, fingerName string) {
+	remainingArgs := findFingerArgs(os.Args)
+	flags := map[string]bool{"help": helpFlag, "verbose": verboseFlag}
+	if err := h.ExecuteFinger(fingerName, flags, kh.StripFlags(remainingArgs)); err != nil {
+		log.Errorf("Encountered error executing finger %s", fingerName)
+		log.Errorf("Error message: %v", err)
+		os.Exit(1)
+	}
+	os.Exit(0)
+
+}
+
+func doInit() {
+	if err := kh.Init(); err != nil {
+		log.Error("Encountered error executing init")
+		log.Errorf("Error message was: %v", err)
+		os.Exit(1)
+	}
+	os.Exit(0)
+}
+
 // This doesn't use a cli argument parser because such libraries typically cannot
 // handle subcommands that are dynamically loaded
 // For this reason cli parsing is done manually
 func main() {
 	args := parseFlagsAndArgs()
-	h := makeHand()
-	if fingerInvoked(h, os.Args) {
-		fingerName := os.Args[1]
-		remainingArgs := findFingerArgs(os.Args)
-		flags := map[string]bool{"help": helpFlag, "verbose": verboseFlag}
-		if err := h.ExecuteFinger(fingerName, flags, remainingArgs); err != nil {
-			log.Errorf("Encountered error executing finger %s", fingerName)
-			log.Errorf("Error message: %v", err)
-			os.Exit(1)
-		}
-		os.Exit(0)
+	h, _ := makeHand()
+	if fingerInvoked(h, args[0]) {
+		executeFinger(h, args[0])
 	}
-	cmd := args[1]
+	cmd := args[0]
 	log.Debug(cmd)
 	switch cmd {
 	case "version":
@@ -156,6 +170,8 @@ func main() {
 		showHelp(h)
 	case "update":
 		executeUpdate(h, kh.StripFlags(os.Args[2:]))
+	case "init":
+		doInit()
 	case "":
 		showHelp(h)
 	}

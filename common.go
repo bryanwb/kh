@@ -1,12 +1,15 @@
 package kh
 
 import (
+	"io/ioutil"
 	"os"
+	"path"
+	"reflect"
 	"strings"
 )
 
 var commonFlags []string = []string{"-v", "--verbose", "-h", "--help"}
-var subcommands []string = []string{"version", "help", "update"}
+var subcommands []string = []string{"version", "help", "update", "init"}
 
 func Map_has_key(m map[string]string, s string) bool {
 	for str, _ := range m {
@@ -110,4 +113,51 @@ func resolvePath(p string) (string, error) {
 		return "", err
 	}
 	return p, nil
+}
+
+func linkFingerToHome(source string, name string) error {
+	target := path.Join(HandHome, name)
+	_, err := os.Lstat(target)
+	if os.IsNotExist(err) {
+		Logger.Debugf("Linking finger %s with source %s to target %s", name, source, target)
+		if symErr := os.Symlink(source, target); symErr != nil {
+			return symErr
+		}
+		return nil
+	}
+	return err
+}
+
+// This is a hack to find the filesystem location of the kh package
+// at runtime
+type Empty struct{}
+
+//Initializes the HandHome w/ default fingers
+func Init() error {
+	_, err := os.Stat(HandHome)
+	if os.IsNotExist(err) {
+		os.Mkdir(HandHome, 0775)
+	} else if err != nil {
+		return err
+	}
+	khPath := reflect.TypeOf(Empty{}).PkgPath()
+	goPath := os.Getenv("GOPATH")
+	fingersPath := path.Join(goPath, "src", khPath, "fingers")
+	di, _ := ioutil.ReadDir(fingersPath)
+	for i := range di {
+		fingerPath := di[i].Name()
+		name := path.Base(fingerPath)
+		fullFingerPath := path.Join(fingersPath, fingerPath)
+		if pathHasFinger(fullFingerPath) {
+			Logger.Debugf("Found finger at %s", fullFingerPath)
+			if err := linkFingerToHome(fullFingerPath, name); err != nil {
+				Logger.Errorf("Couldn not link finger at %s to ./kh/%s",
+					fullFingerPath, name)
+				Logger.Errorf("Error encountered: %s", err.Error())
+			}
+		} else {
+			Logger.Debugf("No finger found at %s", fullFingerPath)
+		}
+	}
+	return nil
 }

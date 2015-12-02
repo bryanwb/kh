@@ -7,7 +7,7 @@ import (
 // This interface defines what a Finger must implement
 // Currently not much, but more than pingo requires
 type Finger interface {
-	Help() string
+	Help(*FingerArgs, *Response) error
 	Execute(*FingerArgs, *Response) error
 }
 
