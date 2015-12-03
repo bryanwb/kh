@@ -157,14 +157,12 @@ The commands `init`, `version`, and `help` are reserved for use by the kh binary
 The flags and args intended for the finger are stored in FingerArgs.Args. Note that that the --verbose, -v, --help, -h
 flags are stripped from FingerArgs and stored in FingerArgs.Flags.
 
+## TODO
 
-
-
-## What's Missing
-
-It would be great if King's Hand could fetch and install additional fingers. Haven't figured out how
+* It would be great if King's Hand could fetch and install additional fingers. Haven't figured out how
 to do that yet. Perhaps using `go get`?
-
-How to support shell completions?
+* Find and list fingers present on github based on repo metadata
+* How to support shell completions?
+* Make it easier for fingers to manage their own flags and arguments, should be able to wrap pflag for this purpose
 
 I would love some feedback on these ideas! Please let me know of any gotchas i have not considered

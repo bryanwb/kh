@@ -129,6 +129,9 @@ func makeArgs(flags map[string]bool, args []string) *FingerArgs {
 	fs := new(flagSet)
 	fs.Help = flags["help"]
 	fs.Verbose = flags["verbose"]
+	if isStdinAttached() {
+		newArgs.Stdin, _ = ioutil.ReadAll(os.Stdin)
+	}
 	newArgs.Flags = fs
 	newArgs.Args = stripCommonFlags(args)
 	return newArgs

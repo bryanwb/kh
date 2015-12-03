@@ -1,6 +1,7 @@
 package kh
 
 import (
+	"golang.org/x/crypto/ssh/terminal"
 	"io/ioutil"
 	"os"
 	"path"
@@ -179,4 +180,10 @@ func findFingerDescription(p string) string {
 		return string(d)
 	}
 	return description
+}
+
+// some magic from http://stackoverflow.com/a/16753808 to determine
+// if Pipe w/ data has attached to Stdin
+func isStdinAttached() bool {
+	return !terminal.IsTerminal(0)
 }
