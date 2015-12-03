@@ -16,7 +16,6 @@ func (p *Finger) Help(fa *kh.FingerArgs, resp *kh.Response) error {
 }
 
 func (p *Finger) Execute(fa *kh.FingerArgs, resp *kh.Response) error {
-	resp.Debug("Inside execute")
 	// wish there was a more elegant way to set the logging level
 	resp.SetVerbose(fa.Flags.Verbose)
 	args := fa.Args

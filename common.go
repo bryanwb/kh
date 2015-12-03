@@ -9,7 +9,8 @@ import (
 )
 
 var commonFlags []string = []string{"-v", "--verbose", "-h", "--help"}
-var subcommands []string = []string{"version", "help", "update", "init"}
+var subcommands []string = []string{"version", "help", "update", "init",
+	"list"}
 
 func Map_has_key(m map[string]string, s string) bool {
 	for str, _ := range m {
@@ -160,4 +161,22 @@ func Init() error {
 		}
 	}
 	return nil
+}
+
+func findFingerDescription(p string) string {
+	description := ""
+	descF := path.Join(p, "DESCRIPTION")
+	Logger.Debugf("Looking for Finger description at %s", p)
+	_, err := os.Stat(descF)
+	if err != nil {
+		Logger.Debugf("Finger description not found at %s", p)
+		Logger.Debugf("Encountered error %v", err)
+		return description
+	}
+	Logger.Debugf("Found finger description at %s", p)
+	if d, err := ioutil.ReadFile(descF); err == nil {
+		Logger.Debugf("Found finger description text: %s", string(d))
+		return string(d)
+	}
+	return description
 }

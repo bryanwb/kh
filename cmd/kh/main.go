@@ -21,6 +21,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/Sirupsen/logrus"
 	"github.com/bryanwb/kh"
@@ -34,6 +35,7 @@ import (
 var log = logrus.New()
 var verboseFlag bool
 var helpFlag bool
+var flagParsingOut bytes.Buffer
 
 func fingerInvoked(h *kh.Hand, arg string) bool {
 	return kh.Contains(h.FingerNames(), arg)
@@ -85,12 +87,7 @@ Flags:
 Use "kh [finger] --help" for more information about a finger.
 `
 	fmt.Printf(helpText)
-	if len(h.Fingers) > 0 {
-		fmt.Printf("Available fingers are:\n%s\n",
-			strings.Join(h.FingerNames(), "\n"))
-	} else {
-		fmt.Printf("Currently no fingers available\n")
-	}
+	showList(h)
 }
 
 func findFingerArgs(args []string) []string {
@@ -100,27 +97,31 @@ func findFingerArgs(args []string) []string {
 	return args[2:]
 }
 
-func parseFlagsAndArgs() []string {
+func parseFlagsAndArgs() ([]string, error) {
+	// We need to override the default behavior to exit program on parsing error
+	// and to not immediately write errors encountered to Stdout
+	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+	flag.CommandLine.SetOutput(&flagParsingOut)
+	flag.Usage = func() {
+		fmt.Fprintf(&flagParsingOut, "Usage of %s:\n", os.Args[0])
+		flag.PrintDefaults()
+	}
 	flag.BoolVarP(&verboseFlag, "verbose", "v", false, "Verbose mode")
 	flag.BoolVarP(&helpFlag, "help", "h", false, "help")
-	flag.Parse()
+	err := flag.CommandLine.Parse(os.Args[1:])
 	if verboseFlag {
 		log.Level = logrus.DebugLevel
-	}
-	if err := flag.CommandLine.Parse(os.Args[1:]); err != nil {
-		flag.Usage()
-		os.Exit(1)
 	}
 	args := flag.Args()
 	log.Debugf("args are %v", args)
 	if len(args) < 1 {
-		return []string{"", ""}
+		return []string{"", ""}, err
 	}
 	if len(args) < 2 {
-		return []string{args[0], ""}
+		return []string{args[0], ""}, err
 	}
 
-	return args
+	return args, err
 }
 
 func executeUpdate(h *kh.Hand, args []string) {
@@ -139,8 +140,16 @@ func executeFinger(h *kh.Hand, fingerName string) {
 		log.Errorf("Error message: %v", err)
 		os.Exit(1)
 	}
-	os.Exit(0)
 
+}
+
+func showList(h *kh.Hand) {
+	if len(h.Fingers) > 0 {
+		fmt.Printf("Available fingers are:\n%s\n",
+			strings.Join(h.FingerDescriptions(), "\n"))
+	} else {
+		fmt.Printf("Currently no fingers available\n")
+	}
 }
 
 func doInit() {
@@ -149,20 +158,28 @@ func doInit() {
 		log.Errorf("Error message was: %v", err)
 		os.Exit(1)
 	}
-	os.Exit(0)
 }
 
 // This doesn't use a cli argument parser because such libraries typically cannot
 // handle subcommands that are dynamically loaded
 // For this reason cli parsing is done manually
 func main() {
-	args := parseFlagsAndArgs()
+	args, parseErr := parseFlagsAndArgs()
 	h, _ := makeHand()
 	if fingerInvoked(h, args[0]) {
 		executeFinger(h, args[0])
+		os.Exit(0)
 	}
 	cmd := args[0]
-	log.Debug(cmd)
+	// since not executing our finger, throw an error
+	// if we see unknown flags
+	if parseErr != nil {
+		// flush any parsing errors encountered
+		// while parsing command line earlier
+		fmt.Fprint(os.Stderr, flagParsingOut.String())
+		flag.Usage()
+		os.Exit(1)
+	}
 	switch cmd {
 	case "version":
 		showVersion()
@@ -174,5 +191,10 @@ func main() {
 		doInit()
 	case "":
 		showHelp(h)
+	case "list":
+		showList(h)
+	default:
+		fmt.Printf("Unknown finger or subcommand \"%s\"\nType `kh list` to see available fingers\n", cmd)
 	}
+
 }

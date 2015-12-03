@@ -100,6 +100,65 @@ These plugins are not dynamically loaded! In fact, to use them you must first
 update the hand binary. To do this just execute `kh update`. After updating, the
 new fingers (plugins) will be avaiable for use.
 
+For most practical purposes, the fingers listed in `~/.kh/` should be symlinks
+to directories in your Go code repository however this is not a hard
+requirement. For example, the built-in hello-world finger is actually a symlink
+to its path inside the kh package. This allows you to use standard Go development
+tools when writing fingers. Alternately, you can hack on a new finger in `~/.kh/foobar/main.go`
+in good-old vi and kh won't complain.
+
+```
+~/.kh/hello-world  --> $GOPATH/src/github.com/bryanwb/kh/fingers/hello-world
+```
+
+
+## Finger Development
+
+A finger must have the following directory structure:
+
+```
+FINGERNAME/
+          DESCRIPTION  # contains short text description of the command, less than 80 chars
+          main.go
+          Makefile  (optional)
+```
+          
+`go build` is used to build the finger if a `Makefile` is not present.
+
+main.go must contain struct that satisfies the Finger interface found in
+finger.go and execute the `kh.Register` and `kh.Run` methods in the body of its
+main method. See the hello-world/main.go example for more details.
+
+King's Hand passed a FingerArgs object that has the flag `Verbose` which if
+present indicates that Verbose mode should be turned on. The FingerArgs object
+also has a Stdin field that holds any data received on Stdin by the kh
+binary. Note that this is not a buffered input stream but just a dumb byte
+array. At some point this should be implemented as a real buffered input stream.
+
+With your keen eye, you have likely noticed that a Finger doesn't look like a
+typical procedural script.  That's because it is actually an RPC Server that
+receives arguments from the kh binary and returns a response.
+
+The Finger receives a Response object that has the fields Stdout, Stderr, and
+Log. These fields are, like Stdin, just dumb byte arrays and not real buffered
+I/O streams. Since the Finger runs in a separate process, any debugging you try
+to do using `log.Debug` or `fmt.Println` will disappear into the ether.
+
+Stdout and Stderr should be used for output you wish to be printed to the
+parent kh command's Stdout and Stderr file handles. The Log field is for debugging
+output you wish to be printed to Stderr when the Verbose flag is set.
+
+### Naming your Finger
+
+The commands `init`, `version`, and `help` are reserved for use by the kh binary itself.
+
+### Option Parsing
+
+The flags and args intended for the finger are stored in FingerArgs.Args. Note that that the --verbose, -v, --help, -h
+flags are stripped from FingerArgs and stored in FingerArgs.Flags.
+
+
+
 
 ## What's Missing
 
