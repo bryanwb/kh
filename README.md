@@ -30,6 +30,14 @@ To install the default fingers and initialize your ~/.kh directory
 kh init
 ```
 
+You can install additional fingers using the `install` subcommand
+
+```
+kh install github.com/bryanwb/example
+```
+
+The install subcommand uses `go get` under the covers. It requires valid
+go import paths.
 
 ## Rationale
 
@@ -150,7 +158,8 @@ output you wish to be printed to Stderr when the Verbose flag is set.
 
 ### Naming your Finger
 
-The commands `init`, `version`, and `help` are reserved for use by the kh binary itself.
+The commands `list`, `install`, `update`, `init`, `version`, and `help` are
+reserved for use by the kh binary itself.
 
 ### Option Parsing
 
@@ -159,8 +168,6 @@ flags are stripped from FingerArgs and stored in FingerArgs.Flags.
 
 ## TODO
 
-* It would be great if King's Hand could fetch and install additional fingers. Haven't figured out how
-to do that yet. Perhaps using `go get`?
 * Find and list fingers present on github based on repo metadata
 * How to support shell completions?
 * Make it easier for fingers to manage their own flags and arguments, should be able to wrap pflag for this purpose

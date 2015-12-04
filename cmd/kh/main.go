@@ -73,11 +73,15 @@ Usage:
 kh [flags]
 kh [finger] [arguments to a finger]
 
-Available Meta-Commands:
-version            Print the version number of King's Hand
-help               C'mon, do I have to explain this one?
-update [finger]    Builds one or more fingers
-                   By default, updates all   
+Available subcommands:
+install [finger...]   Installs one or more fingers given their import paths
+                      uses go get under the covers
+version               Print the version number of King's Hand
+help                  C'mon, do I have to explain this one?
+init                  Creates a ~/.kh directory if one does not exist
+                      and installs default fingers
+update [finger]       Builds one or more fingers
+                      By default, updates all   
 
 
 Flags:
@@ -160,6 +164,18 @@ func doInit() {
 	}
 }
 
+func doInstall(h *kh.Hand, args []string) {
+	args = kh.StripFlags(args)
+	if kh.EmptyArgs(args) {
+		log.Error("You must specify one or more fingers to install")
+		os.Exit(1)
+	}
+	if err := h.InstallFingers(args); err != nil {
+		log.Error(err.Error())
+		os.Exit(1)
+	}
+}
+
 // This doesn't use a cli argument parser because such libraries typically cannot
 // handle subcommands that are dynamically loaded
 // For this reason cli parsing is done manually
@@ -189,6 +205,8 @@ func main() {
 		executeUpdate(h, kh.StripFlags(os.Args[2:]))
 	case "init":
 		doInit()
+	case "install":
+		doInstall(h, os.Args[2:])
 	case "":
 		showHelp(h)
 	case "list":

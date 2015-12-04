@@ -11,7 +11,7 @@ import (
 
 var commonFlags []string = []string{"-v", "--verbose", "-h", "--help"}
 var subcommands []string = []string{"version", "help", "update", "init",
-	"list"}
+	"list", "install"}
 
 func Map_has_key(m map[string]string, s string) bool {
 	for str, _ := range m {
@@ -186,4 +186,12 @@ func findFingerDescription(p string) string {
 // if Pipe w/ data has attached to Stdin
 func isStdinAttached() bool {
 	return !terminal.IsTerminal(0)
+}
+
+// wouldn't need to do this shit if Golang supported Monads
+func EmptyArgs(args []string) bool {
+	if len(args) < 1 || args[0] == "" {
+		return true
+	}
+	return false
 }

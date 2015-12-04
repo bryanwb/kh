@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 )
 
 var Logger *log.Logger
@@ -82,13 +83,17 @@ func (h *Hand) buildFinger(p string) error {
 	goRoot := os.Getenv("GOROOT")
 	Logger.Debugf("Executing command %v in path %s", action, p)
 	cmd := exec.Command(shell, "-c", action)
-	extendedGoPath := fmt.Sprintf("GOPATH=%s:%s", p, goPath)
-	cmd.Env = append(os.Environ(), extendedGoPath, goRoot)
-	cmd.Dir = path.Dir(p)
+	if !strings.HasPrefix(p, goPath) {
+		extendedGoPath := fmt.Sprintf("GOPATH=%s:%s", p, goPath)
+		Logger.Debugf("Using extended go path %s", extendedGoPath)
+		cmd.Env = append(os.Environ(), extendedGoPath, goRoot)
+	}
+	cmd.Dir = p
 	err := cmd.Run()
 	if err != nil {
 		Logger.Errorf("Building %s failed with error %s", p, err.Error())
 		output, _ := cmd.CombinedOutput()
+		Logger.Errorf("cmd is %v", cmd)
 		Logger.Errorf(string(output))
 	} else {
 		Logger.Debugf("Building %s completed successfully", p)
@@ -99,13 +104,13 @@ func (h *Hand) buildFinger(p string) error {
 func (h *Hand) UpdateFinger(finger string) error {
 	p := h.Fingers[finger]
 	Logger.Debugf("finger p is %v", p)
-	srcP, err := resolvePath(p.Path)
+	parent := path.Dir(p.Path)
+	parentP, err := resolvePath(parent)
 	Logger.Debugf("resolved finger p is %v", p)
-
 	if err != nil {
 		return err
 	}
-	return h.buildFinger(srcP)
+	return h.buildFinger(parentP)
 }
 
 func (h *Hand) MakeFinger(name string, flags map[string]bool, args []string) (*FingerClient, error) {
@@ -199,4 +204,33 @@ func (h *Hand) FingerDescriptions() []string {
 		descs = append(descs, desc)
 	}
 	return descs
+}
+
+func (h *Hand) installPackage(pkg string) error {
+	action := fmt.Sprintf("go get %s", pkg)
+	shell := os.Getenv("SHELL")
+	Logger.Debugf("Executing command %v", action)
+	cmd := exec.Command(shell, "-c", action)
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	goP := os.Getenv("GOPATH")
+	pkgPath := path.Join(goP, "src", pkg)
+	splitPkgNames := strings.Split(pkg, "/")
+	fingerName := splitPkgNames[len(splitPkgNames)-1]
+	Logger.Debugf("finger name is %s for package %s", fingerName, pkg)
+	if err := h.buildFinger(pkgPath); err != nil {
+		return err
+	}
+	return linkFingerToHome(pkgPath, fingerName)
+}
+
+// Installs one or more fingers using go get and some symlinks
+func (h *Hand) InstallFingers(packages []string) error {
+	for i := range packages {
+		if err := h.installPackage(packages[i]); err != nil {
+			return err
+		}
+	}
+	return nil
 }
